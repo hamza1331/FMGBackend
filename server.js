@@ -33,6 +33,16 @@ const Lecture = require('./models/Lectures')
 const logger = require('logger').createLogger()
 var upload = multer({ dest: 'uploads/' }); //setting the default folder for multer
 const client = require('socket.io').listen(server).sockets;
+var archiver = require('archiver');
+archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+
+// create a file to stream archive data to.
+var output = fs.createWriteStream(__dirname + '/example.zip');
+var archive = archiver('zip-encryptable', {
+  zlib: { level: 9 },
+  forceLocalTime: true,
+  password: '32%#FFE$%435kk34%@%oih4oier2h3oihd324hhio3eh23hid$%#$Jjoj34#%#$moj'
+});
 app.use(bodyParser.json())  //Body Parser MiddleWare
 app.use(express.json())
 app.use(cors())
@@ -135,7 +145,7 @@ app.post('/api/helloAdmin',(req,res)=>{
   }
 })
 
-//User management
+//User mgement
 
 
 //create user
@@ -1189,12 +1199,53 @@ app.post('/upload',upload.single('fileData'), (req, res,next) => {
     }
    });
   });
-  app.get('/getFile',(req,res)=>{         //working
+  app.get('/getFile:filename',(req,res)=>{         //working
     // res.sendFile(fs.readFile(path.join(__dirname+'/uploads/d6764085776b0e8d035e45a7eef999d6')))
     // res.sendFile(__dirname+'/uploads/d6764085776b0e8d035e45a7eef999d6')
-    const id = crypto.randomBytes(16).toString("hex");
-    // res.sendFile(__dirname+'/uploads/video.txt')
-    res.download(__dirname+'/uploads/video.txt')
+    // const id = crypto.randomBytes(16).toString("hex");
+    // // res.sendFile(__dirname+'/uploads/video.txt')
+    // res.download(__dirname+'/uploads/video.txt')
+    var output = fs.createWriteStream(__dirname + `/uploads/${req.params.filename}.zip`);
+var archive = archiver('zip-encryptable', {
+  zlib: { level: 9 },
+  forceLocalTime: true,
+  password: '32%#FFE$%435kk34%@%oih4oier2h3oihd324hhio3eh23hid$%#$Jjoj34#%#$moj'
+});
+    output.on('close', ()=> {
+      console.log(archive.pointer() + ' total bytes');
+      console.log('archiver has been finalized and the output file descriptor has closed.');
+      res.download(__dirname+ `/uploads/${req.params.filename}.zip`)
+    });
+    
+    output.on('end', function() {
+      console.log('Data has been drained');
+    });
+    
+    // good practice to catch warnings (ie stat failures and other non-blocking errors)
+    archive.on('warning', function(err) {
+      if (err.code === 'ENOENT') {
+        // log warning
+      } else {
+        // throw error
+        throw err;
+      }
+    });
+    
+    // good practice to catch this error explicitly
+    archive.on('error', function(err) {
+      throw err;
+    });
+    
+    // pipe archive data to the file
+    archive.pipe(output);
+    
+    // append a file from stream
+    var file1 = __dirname + '/uploads/'+req.params.filename;
+    archive.append(fs.createReadStream(file1), { name: req.params.filename });
+    
+    // finalize the archive (ie we are done appending files but streams have to finish yet)
+    // 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
+    archive.finalize();
   })
 
   app.get('/download', function(req, res){    //working
