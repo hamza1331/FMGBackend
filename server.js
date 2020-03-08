@@ -207,6 +207,21 @@ app.put('/api/addImage',upload.single('fileData'),(req,res)=>{    //tested
   }
 })
 
+//Search by Mobile
+
+app.post('/api/searchByMobile',(req,res)=>{
+  if(req.body.mobile){
+    User.findOne({mobile:req.body.mobile},(err,doc)=>{
+      if(err)return res.json(handleErr(err))
+      else{
+        return res.json(handleSuccess(doc))
+      }
+    })
+  }else{
+    return res.json(handleErr("Valid Mobile number is required"))
+  }
+})
+
 //get prorfile picture
 app.get('/api/getProfilePic:path',(req,res)=>{  //tested
   var file = __dirname + '/uploads/'+req.params.path;
@@ -832,7 +847,8 @@ app.post('/api/recommendVideos',(req,res)=>{    //tested
                  dur+=elem.duration
                 let obj = {
                   ...elem._doc,
-                  fileServerName:lec.fileServerName
+                  fileServerName:lec.fileServerName,
+                  lectureID:lec._id
                 }
                  console.log(obj)
                  recommendTopics.push(obj)
@@ -1059,7 +1075,7 @@ app.get('/api/getWhatsapp',(req,res)=>{
 
 app.get('/api/getSchedule:sessionID',(req,res)=>{
   Schedule.find({sessionID:req.params.sessionID})
-  .sort('day')
+  .sort('day').populate('lectureID')
   .exec((err,docs)=>{
     if(err)return res.json(handleErr(err))
     else return res.json(handleSuccess(docs))

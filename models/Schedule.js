@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const Schema = mongoose.Schema
 const scheduleSchema = new mongoose.Schema({
     day:{
         type:Number,
@@ -10,7 +10,8 @@ const scheduleSchema = new mongoose.Schema({
         required:true
     },
     lectureID:{
-        type:String
+        type:Schema.Types.ObjectId,
+        ref:"lectures"
     },
     lectureTitle:{
         type:String

@@ -70,6 +70,10 @@ const UserSchema = new mongoose.Schema({
   isVerified:{
       type:Boolean,
       default:false
+  },
+  mobile:{
+      type:String,
+      unique:[true,'Mobile number should be unique']
   }
 });
 
